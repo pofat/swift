@@ -256,9 +256,8 @@ static bool withStatusRecordLock(AsyncTask *task,
 /*************************** RECORD MANAGEMENT ****************************/
 /**************************************************************************/
 
-SWIFT_EXPORT_FROM(swift_Concurrency)
 SWIFT_CC(swift)
-bool swift_task_addStatusRecordWithChecks(
+bool swift::addStatusRecord(
     TaskStatusRecord *newRecord,
     llvm::function_ref<bool(ActiveTaskStatus status)> shouldAddRecord) {
 
@@ -287,7 +286,7 @@ bool swift_task_addStatusRecordWithChecks(
               /*failure*/ std::memory_order_relaxed)) {
         return true;
       } else {
-        /* Retry */
+        // Retry
       }
     } else {
       return false;
@@ -295,9 +294,8 @@ bool swift_task_addStatusRecordWithChecks(
   }
 }
 
-SWIFT_EXPORT_FROM(swift_Concurrency)
 SWIFT_CC(swift)
-bool swift_task_removeStatusRecord(TaskStatusRecord *record) {
+bool swift::removeStatusRecord(TaskStatusRecord *record) {
   auto task = swift_task_getCurrent();
   SWIFT_TASK_DEBUG_LOG("remove status record = %p, from current task = %p",
                        record, task);
@@ -390,10 +388,10 @@ static bool swift_task_hasTaskGroupStatusRecordImpl() {
  * parent's task status record lock. When called to link a child into a task
  * group, this holds the parent's task status record lock.
  */
-SWIFT_EXPORT_FROM(swift_Concurrency)
 SWIFT_CC(swift)
-void swift_task_updateNewChildWithParentAndGroupState(
-    AsyncTask *child, ActiveTaskStatus parentStatus, TaskGroup *group) {
+void swift::updateNewChildWithParentAndGroupState(AsyncTask *child,
+                                                  ActiveTaskStatus parentStatus,
+                                                  TaskGroup *group) {
   /*
    * We can take the fast path of just modifying the ActiveTaskStatus in the
    * child task since we know that it won't have any task status records and
@@ -412,11 +410,12 @@ void swift_task_updateNewChildWithParentAndGroupState(
     newChildTaskStatus = newChildTaskStatus.withCancelled();
   }
 
-  /* Parent task got escalated, make sure to propagate it to child. */
-  if (parentStatus.isStoredPriorityEscalated()) {
-    newChildTaskStatus = newChildTaskStatus.withEscalatedPriority(
-        parentStatus.getStoredPriority());
-  }
+  /* Propagate max priority of parent to child task's active status and the Job
+   * header */
+  JobPriority pri = parentStatus.getStoredPriority();
+  newChildTaskStatus = newChildTaskStatus.withPriority(pri);
+  child->Flags.setPriority(pri);
+
   child->_private().Status.store(newChildTaskStatus, std::memory_order_relaxed);
 }
 
@@ -430,24 +429,20 @@ static void swift_taskGroup_attachChildImpl(TaskGroup *group,
   // concurrent cancellation or escalation as we're adding new tasks to the
   // group.
   auto parent = swift_task_getCurrent();
-  withStatusRecordLock(parent, LockContext::OnTask,
-                       [&](ActiveTaskStatus &parentStatus) {
-                         group->addChildTask(child);
-                         /*
-                          * After getting parent's status record lock, do some
-                          * sanity checks to see if parent task or group has
-                          * state changes that need to be propagated to the
-                          * child.
-                          *
-                          * This is the same logic that we would do if we were
-                          * adding a child task status record - see also
-                          * asyncLet_addImpl. Since we attach a child task to a
-                          * TaskGroupRecord instead, we synchronize on the
-                          * parent's task status and then update the child.
-                          */
-                         swift_task_updateNewChildWithParentAndGroupState(
-                             child, parentStatus, group);
-                       });
+  withStatusRecordLock(
+      parent, LockContext::OnTask, [&](ActiveTaskStatus &parentStatus) {
+        group->addChildTask(child);
+
+        // After getting parent's status record lock, do some sanity checks to
+        // see if parent task or group has state changes that need to be
+        // propagated to the child.
+        //
+        // This is the same logic that we would do if we were adding a child
+        // task status record - see also asyncLet_addImpl. Since we attach a
+        // child task to a TaskGroupRecord instead, we synchronize on the
+        // parent's task status and then update the child.
+        updateNewChildWithParentAndGroupState(child, parentStatus, group);
+      });
 }
 
 /****************************** CANCELLATION ******************************/

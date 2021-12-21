@@ -159,11 +159,10 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(NearestTaskDeadline::None, nearest.ValueKind);
 
     // Add deadline 1.  Check that we haven't been cancelled yet.
-    swift_task_addStatusRecordWithChecks(&recordOne,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordOne, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // There should now be an active deadline.
@@ -172,7 +171,7 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(deadlineOne, nearest.Value);
 
     // Remove deadline 1.  Check that we haven't been cancelled yet.
-    result = swift_task_removeStatusRecord(&recordOne);
+    result = removeStatusRecord(&recordOne);
     EXPECT_TRUE(result);
 
     // There shouldn't be an active deadline anymore.
@@ -180,17 +179,15 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(NearestTaskDeadline::None, nearest.ValueKind);
 
     // Add deadline 1, then 2.
-    swift_task_addStatusRecordWithChecks(&recordOne,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordOne, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
-    swift_task_addStatusRecordWithChecks(&recordTwo,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordTwo, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // The nearest deadline should be deadline 1.
@@ -199,17 +196,16 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(deadlineOne, nearest.Value);
 
     // Remove the deadlines.
-    result = swift_task_removeStatusRecord(&recordTwo);
+    result = removeStatusRecord(&recordTwo);
     EXPECT_TRUE(result);
-    result = swift_task_removeStatusRecord(&recordOne);
+    result = removeStatusRecord(&recordOne);
     EXPECT_TRUE(result);
 
     // Add deadline 2, then 1s.
-    swift_task_addStatusRecordWithChecks(&recordTwo,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordTwo, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // In the middle, the nearest deadline should be deadline 2.
@@ -217,11 +213,10 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(NearestTaskDeadline::Active, nearest.ValueKind);
     EXPECT_EQ(deadlineTwo, nearest.Value);
 
-    swift_task_addStatusRecordWithChecks(&recordOne,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordOne, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // The nearest deadline should be deadline 1.
@@ -230,40 +225,37 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(deadlineOne, nearest.Value);
 
     // Remove the deadlines.
-    result = swift_task_removeStatusRecord(&recordOne);
+    result = removeStatusRecord(&recordOne);
     EXPECT_TRUE(result);
-    result = swift_task_removeStatusRecord(&recordTwo);
+    result = removeStatusRecord(&recordTwo);
     EXPECT_TRUE(result);
 
     // Remove out of order.
-    swift_task_addStatusRecordWithChecks(&recordTwo,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordTwo, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
-    swift_task_addStatusRecordWithChecks(&recordOne,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordOne, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // The nearest deadline should be deadline 1.
     nearest = swift_task_getNearestDeadline(task);
     EXPECT_EQ(NearestTaskDeadline::Active, nearest.ValueKind);
     EXPECT_EQ(deadlineOne, nearest.Value);
-    result = swift_task_removeStatusRecord(&recordTwo);
+    result = removeStatusRecord(&recordTwo);
     EXPECT_TRUE(result);
-    result = swift_task_removeStatusRecord(&recordOne);
+    result = removeStatusRecord(&recordOne);
     EXPECT_TRUE(result);
 
     // Add deadline 2, then cancel.
-    swift_task_addStatusRecordWithChecks(&recordTwo,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordTwo, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_TRUE(result);
 
     // The nearest deadline should be deadline 2.
@@ -280,20 +272,19 @@ TEST(TaskStatusTest, deadline) {
     EXPECT_EQ(NearestTaskDeadline::AlreadyCancelled, nearest.ValueKind);
 
     // Add deadline 1.
-    swift_task_addStatusRecordWithChecks(&recordOne,
-                                         [&](ActiveTaskStatus parentStatus) {
-                                           result = !parentStatus.isCancelled();
-                                           return true;
-                                         });
+    addStatusRecord(&recordOne, [&](ActiveTaskStatus parentStatus) {
+      result = !parentStatus.isCancelled();
+      return true;
+    });
     EXPECT_FALSE(result);
 
     nearest = swift_task_getNearestDeadline(task);
     EXPECT_EQ(NearestTaskDeadline::AlreadyCancelled, nearest.ValueKind);
 
-    result = swift_task_removeStatusRecord(&recordOne);
+    result = removeStatusRecord(&recordOne);
     EXPECT_FALSE(result);
 
-    result = swift_task_removeStatusRecord(&recordTwo);
+    result = removeStatusRecord(&recordTwo);
     EXPECT_FALSE(result);
 
     nearest = swift_task_getNearestDeadline(task);

@@ -144,10 +144,9 @@ void swift::asyncLet_addImpl(AsyncTask *task, AsyncLet *asyncLet,
 
   // ok, now that the async let task actually is initialized: attach it to the
   // current task
-  bool addedRecord = swift_task_addStatusRecordWithChecks(
-      record, [&](ActiveTaskStatus parentStatus) {
-        swift_task_updateNewChildWithParentAndGroupState(task, parentStatus,
-                                                         NULL);
+  bool addedRecord =
+      addStatusRecord(record, [&](ActiveTaskStatus parentStatus) {
+        updateNewChildWithParentAndGroupState(task, parentStatus, NULL);
         return true;
       });
   assert(addedRecord);
@@ -316,7 +315,7 @@ static void swift_asyncLet_endImpl(AsyncLet *alet) {
 
   // Remove the child record from the parent task
   auto record = asImpl(alet)->getTaskRecord();
-  swift_task_removeStatusRecord(record);
+  removeStatusRecord(record);
 
   // TODO: we need to implicitly await either before the end or here somehow.
 
@@ -344,7 +343,7 @@ static void asyncLet_finish_after_task_completion(SWIFT_ASYNC_CONTEXT AsyncConte
 
   // Remove the child record from the parent task
   auto record = asImpl(alet)->getTaskRecord();
-  swift_task_removeStatusRecord(record);
+  removeStatusRecord(record);
 
   // and finally, release the task and destroy the async-let
   assert(swift_task_getCurrent() && "async-let must have a parent task");

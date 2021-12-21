@@ -1058,16 +1058,14 @@ swift_task_addCancellationHandlerImpl(
 
   bool fireHandlerNow = false;
 
-  swift_task_addStatusRecordWithChecks(record,
-                                       [&](ActiveTaskStatus parentStatus) {
-                                         if (parentStatus.isCancelled()) {
-                                           fireHandlerNow = true;
-                                           /* We don't fire the cancellation
-                                            * handler here since this function
-                                            * needs to be idempotent */
-                                         }
-                                         return true;
-                                       });
+  addStatusRecord(record, [&](ActiveTaskStatus parentStatus) {
+    if (parentStatus.isCancelled()) {
+      fireHandlerNow = true;
+      // We don't fire the cancellation handler here since this function needs
+      // to be idempotent
+    }
+    return true;
+  });
 
   if (fireHandlerNow) {
     record->run();
@@ -1078,7 +1076,7 @@ swift_task_addCancellationHandlerImpl(
 SWIFT_CC(swift)
 static void swift_task_removeCancellationHandlerImpl(
     CancellationNotificationStatusRecord *record) {
-  swift_task_removeStatusRecord(record);
+  removeStatusRecord(record);
   swift_task_dealloc(record);
 }
 
