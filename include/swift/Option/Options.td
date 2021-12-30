@@ -1246,6 +1246,10 @@ def working_directory : Separate<["-"], "working-directory">,
 def working_directory_EQ : Joined<["-"], "working-directory=">,
   Alias<working_directory>;
 
+def debug_compilation_dir : Separate<["-"], "debug-compilation-dir">,
+  Flags<[FrontendOption, ArgumentIsPath]>, MetaVarName<"<path>">,
+  HelpText<"The compilation directory to embed in the debug info.">;
+
 def user_module_version : Separate<["-"], "user-module-version">,
   Flags<[FrontendOption, ModuleInterfaceOptionIgnorable, NewDriverOnlyOption]>,
   HelpText<"Module version specified from Swift module authors">,
@@ -1476,9 +1480,5 @@ def use_interface_for_module: Separate<["-", "--"], "use-interface-for-module">,
   Flags<[NoDriverOption, SwiftAPIDigesterOption]>,
   HelpText<"Prefer loading these modules via interface">,
   MetaVarName<"<name>">;
-
-def debug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,
-  Flags<[FrontendOption]>,
-  HelpText<"The compilation directory to embed in the debug info.">;
 
 include "FrontendOptions.td"
