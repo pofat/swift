@@ -840,6 +840,10 @@ def coverage_prefix_map : Separate<["-"], "coverage-prefix-map">,
   Flags<[FrontendOption]>,
   HelpText<"Remap source paths in coverage info">, MetaVarName<"<prefix=replacement>">;
 
+def debug_compilation_dir : Separate<["-"], "debug-compilation-dir">,
+  Flags<[FrontendOption, ArgumentIsPath]>, MetaVarName<"<path>">,
+  HelpText<"The compilation directory to embed in the debug info.">;
+
 def debug_info_format : Joined<["-"], "debug-info-format=">,
   Flags<[FrontendOption]>,
   HelpText<"Specify the debug info format type to either 'dwarf' or 'codeview'">;
@@ -1246,9 +1250,7 @@ def working_directory : Separate<["-"], "working-directory">,
 def working_directory_EQ : Joined<["-"], "working-directory=">,
   Alias<working_directory>;
 
-def debug_compilation_dir : Separate<["-"], "debug-compilation-dir">,
-  Flags<[FrontendOption, ArgumentIsPath]>, MetaVarName<"<path>">,
-  HelpText<"The compilation directory to embed in the debug info.">;
+
 
 def user_module_version : Separate<["-"], "user-module-version">,
   Flags<[FrontendOption, ModuleInterfaceOptionIgnorable, NewDriverOnlyOption]>,
@@ -1256,7 +1258,7 @@ def user_module_version : Separate<["-"], "user-module-version">,
   MetaVarName<"<vers>">;
 
 // VFS
-
+   
 def vfsoverlay : JoinedOrSeparate<["-"], "vfsoverlay">,
   Flags<[FrontendOption, ArgumentIsPath, SwiftAPIExtractOption]>,
   HelpText<"Add directory to VFS overlay file">;
