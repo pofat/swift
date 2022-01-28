@@ -840,6 +840,10 @@ def coverage_prefix_map : Separate<["-"], "coverage-prefix-map">,
   Flags<[FrontendOption]>,
   HelpText<"Remap source paths in coverage info">, MetaVarName<"<prefix=replacement>">;
 
+def debug_compilation_dir : Separate<["-"], "debug-compilation-dir">,
+  Flags<[FrontendOption, ArgumentIsPath]>, MetaVarName<"<path>">,
+  HelpText<"The compilation directory to embed in the debug info.">;
+
 def debug_info_format : Joined<["-"], "debug-info-format=">,
   Flags<[FrontendOption]>,
   HelpText<"Specify the debug info format type to either 'dwarf' or 'codeview'">;
